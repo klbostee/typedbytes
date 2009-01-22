@@ -114,6 +114,9 @@ class Output(object):
     def __init__(self, file):
         self.file = file
 
+    def __del__(self):
+        self.file.flush()
+
     def write(self, obj):
         t = type(obj)
         if t == types.BooleanType:
