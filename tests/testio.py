@@ -10,8 +10,7 @@ class TestIO(unittest.TestCase):
                    (1,2,3), [1,2,3,4], {1:2,3:4}, set([1,2,3])]
         file = open("test.bin", "wb")
         output = typedbytes.Output(file)
-        for obj in objects:
-            output.write(obj)
+        output.writes(objects)
         file.close()
         file = open("test.bin", "rb")
         input = typedbytes.Input(file)

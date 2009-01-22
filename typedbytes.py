@@ -54,11 +54,14 @@ class Input(object):
         else:
             raise ValueError("invalid type byte: " + str(t))
 
-    def __iter__(self):
+    def reads(self):
         record = self.read()
         while record != None:
             yield record
             record = self.read()
+
+    def __iter__(self):
+        return self.reads()
 
     def read_type(self):
         byte = self.file.read(1)
@@ -115,7 +118,8 @@ class Output(object):
         self.file = file
 
     def __del__(self):
-        self.file.flush()
+        if not file.closed:
+            self.file.flush()
 
     def write(self, obj):
         t = type(obj)
@@ -135,6 +139,10 @@ class Output(object):
             self.write_map(obj)
         else:
             self.write_bytes(pickle.dumps(obj, protocol=2))
+
+    def writes(self, iterable):
+        for obj in iter(iterable):
+            self.write(obj)
 
     def write_bytes(self, bytes):
         self.file.write(pack('!Bi', BYTES, len(bytes)))
@@ -190,8 +198,8 @@ class PairedInput(Input):
 
 class PairedOutput(Output):
 
-    def write(self, obj1, obj2):
-        Output.write(self, obj1)
-        Output.write(self, obj2)
+    def write(self, pair):
+        Output.write(self, pair[0])
+        Output.write(self, pair[1])
 
 
