@@ -18,74 +18,6 @@ MAP = 10
 MARKER = 255
 
 
-class Output(object):
-
-    def __init__(self, file):
-        self.file = file
-
-    def write(self, obj):
-        t = type(obj)
-        if t == types.BooleanType:
-            self.write_bool(obj)
-        elif t == types.IntType:
-            self.write_long(obj)  # Python ints are 64 bit
-        elif t == types.FloatType:
-            self.write_double(obj)  # Python floats are 64 bit
-        elif t == types.StringType:
-            self.write_string(obj)
-        elif t == types.TupleType:
-            self.write_vector(obj)
-        elif t == types.ListType:
-            self.write_list(obj)
-        elif t == types.DictType:
-            self.write_map(obj)
-        else:
-            self.write_bytes(pickle.dumps(obj, protocol=2))
-
-    def write_bytes(self, bytes):
-        self.file.write(pack('!Bi', BYTES, len(bytes)))
-        self.file.write(bytes)
-
-    def write_byte(self, byte):
-        self.file.write(pack('!Bb', BYTE, byte))
-
-    def write_bool(self, bool_):
-        self.file.write(pack('!Bb', BOOL, int(bool_)))
-
-    def write_int(self, int_):
-        self.file.write(pack('!Bi', INT, int_))
-
-    def write_long(self, long_):
-        self.file.write(pack('!Bq', LONG, long_)) 
-
-    def write_float(self, float_):
-        self.file.write(pack('!Bf', FLOAT, float_))
-
-    def write_double(self, double):
-        self.file.write(pack('!Bd', DOUBLE, double))
-
-    def write_string(self, string):
-        self.file.write(pack('!Bi', STRING, len(string)))
-        self.file.write(string)
-
-    def write_vector(self, vector):
-        self.file.write(pack('!Bi', VECTOR, len(vector)))
-        for obj in vector:
-            Output.write(self, obj)
-
-    def write_list(self, list_):
-        self.file.write(pack('!B', LIST))
-        for obj in list_:
-            Output.write(self, obj)
-        self.file.write(pack('!B', MARKER))
-
-    def write_map(self, map):
-        self.file.write(pack('!Bi', MAP, len(map)))
-        for (key, value) in map.iteritems():
-            Output.write(self, key)
-            Output.write(self, value)
-
-
 class Input(object):
 
     def __init__(self, file):
@@ -175,6 +107,74 @@ class Input(object):
         count = unpack('!i', self.file.read(4))[0]
         return dict((Input.read(self), Input.read(self)) \
                     for i in xrange(count))
+
+
+class Output(object):
+
+    def __init__(self, file):
+        self.file = file
+
+    def write(self, obj):
+        t = type(obj)
+        if t == types.BooleanType:
+            self.write_bool(obj)
+        elif t == types.IntType:
+            self.write_long(obj)  # Python ints are 64 bit
+        elif t == types.FloatType:
+            self.write_double(obj)  # Python floats are 64 bit
+        elif t == types.StringType:
+            self.write_string(obj)
+        elif t == types.TupleType:
+            self.write_vector(obj)
+        elif t == types.ListType:
+            self.write_list(obj)
+        elif t == types.DictType:
+            self.write_map(obj)
+        else:
+            self.write_bytes(pickle.dumps(obj, protocol=2))
+
+    def write_bytes(self, bytes):
+        self.file.write(pack('!Bi', BYTES, len(bytes)))
+        self.file.write(bytes)
+
+    def write_byte(self, byte):
+        self.file.write(pack('!Bb', BYTE, byte))
+
+    def write_bool(self, bool_):
+        self.file.write(pack('!Bb', BOOL, int(bool_)))
+
+    def write_int(self, int_):
+        self.file.write(pack('!Bi', INT, int_))
+
+    def write_long(self, long_):
+        self.file.write(pack('!Bq', LONG, long_)) 
+
+    def write_float(self, float_):
+        self.file.write(pack('!Bf', FLOAT, float_))
+
+    def write_double(self, double):
+        self.file.write(pack('!Bd', DOUBLE, double))
+
+    def write_string(self, string):
+        self.file.write(pack('!Bi', STRING, len(string)))
+        self.file.write(string)
+
+    def write_vector(self, vector):
+        self.file.write(pack('!Bi', VECTOR, len(vector)))
+        for obj in vector:
+            Output.write(self, obj)
+
+    def write_list(self, list_):
+        self.file.write(pack('!B', LIST))
+        for obj in list_:
+            Output.write(self, obj)
+        self.file.write(pack('!B', MARKER))
+
+    def write_map(self, map):
+        self.file.write(pack('!Bi', MAP, len(map)))
+        for (key, value) in map.iteritems():
+            Output.write(self, key)
+            Output.write(self, value)
 
 
 class PairedInput(Input):
