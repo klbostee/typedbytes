@@ -1,4 +1,4 @@
-import cPickle as pickle
+import cPickle
 import types
 from struct import pack, unpack
 
@@ -48,7 +48,11 @@ class Input(object):
         elif t == MAP:
             return self.read_map()
         elif t == BYTES:
-            return pickle.loads(self.read_bytes())
+            bytes = self.read_bytes()
+            try:
+                return cPickle.loads(bytes)
+            except cPickle.UnpicklingError:
+                return bytes
         elif t == MARKER:
             return None
         else:
@@ -138,7 +142,7 @@ class Output(object):
         elif t == types.DictType:
             self.write_map(obj)
         else:
-            self.write_bytes(pickle.dumps(obj, protocol=2))
+            self.write_bytes(cPickle.dumps(obj, protocol=2))
 
     def writes(self, iterable):
         for obj in iter(iterable):

@@ -19,6 +19,23 @@ class TestIO(unittest.TestCase):
         file.close()
         os.remove("test.bin")
 
+    def testpickle(self):
+        file = open("test.bin", "wb")
+        output = typedbytes.Output(file)
+        output.write_bytes("123")
+        output.write(MyClass())
+        file.close()
+        file = open("test.bin", "rb")
+        input = typedbytes.Input(file)
+        self.assertEqual("123", input.read())
+        self.assertEqual(234, input.read().attr)
+        file.close()
+        os.remove("test.bin")
+
+
+class MyClass:
+    attr = 234
+
 
 if __name__ == "__main__":
     suite = unittest.TestLoader().loadTestsFromTestCase(TestIO)
