@@ -130,9 +130,17 @@ class Output(object):
         if t == types.BooleanType:
             self.write_bool(obj)
         elif t == types.IntType:
-            self.write_long(obj)  # Python ints are 64 bit
+            # Python ints are 64 bit
+            if -2147483648 <= obj <= 2147483647:
+                self.write_int(obj)
+            else:
+                self.write_long(obj)
         elif t == types.FloatType:
-            self.write_double(obj)  # Python floats are 64 bit
+            # Python floats are 64 bit
+            if 1.40129846432481707e-45 <= obj <= 3.40282346638528860e+38:
+                self.write_float(obj)
+            else:
+                self.write_double(obj)
         elif t == types.StringType:
             self.write_string(obj)
         elif t == types.TupleType:
