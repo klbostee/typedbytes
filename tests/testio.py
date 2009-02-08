@@ -6,7 +6,7 @@ import typedbytes
 class TestIO(unittest.TestCase):
     
     def testio(self):
-        objects = [True, 1234, 3000000000, 12345L, 1.0, "trala",
+        objects = [True, 1234, 3000000000, 12345L, 1.23, "trala",
                    (1,2,3), [1,2,3,4], {1:2,3:4}, set([1,2,3])]
         file = open("test.bin", "wb")
         output = typedbytes.Output(file)
