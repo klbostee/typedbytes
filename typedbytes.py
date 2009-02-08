@@ -137,10 +137,7 @@ class Output(object):
                 self.write_long(obj)
         elif t == types.FloatType:
             # Python floats are 64 bit
-            if 1.40129846432481707e-45 <= obj <= 3.40282346638528860e+38:
-                self.write_float(obj)
-            else:
-                self.write_double(obj)
+            self.write_double(obj)
         elif t == types.StringType:
             self.write_string(obj)
         elif t == types.TupleType:
