@@ -211,15 +211,3 @@ class PairedOutput(Output):
         Output.write(self, pair[0])
         Output.write(self, pair[1])
 
-
-def findmodpath():
-    import os, sys
-    process = os.popen(sys.executable + ' -m typedbytes modpath')
-    modpath = process.readlines()[0].strip()   
-    process.close()
-    return modpath
-
-
-if __name__ == "__main__":
-    import sys
-    print sys.argv[0]
