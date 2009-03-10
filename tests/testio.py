@@ -40,7 +40,7 @@ class TestIO(unittest.TestCase):
     def testpickle(self):
         file = open("test.bin", "wb")
         output = typedbytes.Output(file)
-        output.write_bytes("123")
+        output.write("123")
         output.write(MyClass())
         file.close()
         file = open("test.bin", "rb")

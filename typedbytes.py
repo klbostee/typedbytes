@@ -14,6 +14,7 @@ def classes():
     VECTOR = 8
     LIST = 9
     MAP = 10
+    PICKLE = 100
     MARKER = 255
     LIST_CODE, MARKER_CODE = (pack('!B', i) for i in (LIST, MARKER))
     STRING_ENCODING = 'utf8'
@@ -41,10 +42,6 @@ def classes():
                 return self.read_string()
             elif t == BYTES:
                 bytes = self.read_bytes()
-                try:
-                    return loads(bytes)
-                except UnpicklingError:
-                    return bytes
             elif t == VECTOR:
                 return self.read_vector()
             elif t == LIST:
@@ -61,6 +58,8 @@ def classes():
                 return self.read_float()
             elif t == BYTE:
                 return self.read_byte()
+            elif t == PICKLE:
+                return self.read_pickle()
             else:
                 raise StructError("Invalid type byte: " + str(t))
 
@@ -131,6 +130,13 @@ def classes():
             count = unpack('!i', self.file.read(4))[0]
             return dict((r(), r()) for i in xrange(count))
 
+        def read_pickle(self):
+            count = unpack('!i', self.file.read(4))[0]
+            bytes = self.file.read(count)
+            if _len(bytes) != count:
+                raise StructError("EOF before reading all of bytes type")
+            return loads(bytes)
+
 
     _isinstance, _int, _long, _unicode = isinstance, int, long, unicode
     _bool, _float, _tuple, _list, _dict = bool, float, tuple, list, dict
@@ -159,7 +165,7 @@ def classes():
                 elif -9223372036854775808L <= obj <= 9223372036854775807L:
                     self.write_long(obj)
                 else:
-                    self.write_bytes(dumps(obj, HIGHEST_PROTOCOL))
+                    self.write_pickle(obj)
             elif _isinstance(obj, _unicode):
                 self.write_string(obj)
             elif _isinstance(obj, _bool):
@@ -173,7 +179,7 @@ def classes():
             elif _isinstance(obj, _dict):
                 self.write_map(obj)
             else:
-                self.write_bytes(dumps(obj, HIGHEST_PROTOCOL))
+                self.write_pickle(obj)
 
         write = _write
 
@@ -229,6 +235,11 @@ def classes():
         def write_map(self, map):
             self.file.write(pack('!Bi', MAP, _len(map)))
             self._writes(flatten(map.iteritems()))
+
+        def write_pickle(self, obj):
+            bytes = dumps(obj, HIGHEST_PROTOCOL)
+            self.file.write(pack('!Bi', PICKLE, _len(bytes)))
+            self.file.write(bytes)
 
 
     class PairedInput(Input):
