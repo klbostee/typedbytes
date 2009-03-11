@@ -36,6 +36,7 @@ def classes():
             self.file = file
             self.unicode_errors = unicode_errors
             self.eof = False
+            self.handler_table = self.make_handler_table()
 
         def _read(self):
             try:
@@ -43,37 +44,7 @@ def classes():
             except StructError:
                 self.eof = True
                 raise StopIteration
-            # A guess at frequency order:
-            if   t == INT:
-                return self.read_int()
-            elif t == LONG:
-                return self.read_long()
-            elif t == UNICODE:
-                return self.read_unicode()
-            elif t == STRING:
-                return self.read_string()
-            elif t == BYTES:
-                bytes = self.read_bytes()
-            elif t == VECTOR:
-                return self.read_vector()
-            elif t == LIST:
-                return self.read_list()
-            elif t == MAP:
-                return self.read_map()
-            elif t == BOOL:
-                return self.read_bool()
-            elif t == DOUBLE:
-                return self.read_double()
-            elif t == MARKER:
-                raise StopIteration
-            elif t == FLOAT:
-                return self.read_float()
-            elif t == BYTE:
-                return self.read_byte()
-            elif t == PICKLE:
-                return self.read_pickle()
-            else:
-                raise StructError("Invalid type byte: " + str(t))
+            return self.handler_table[t](self)
 
         def read(self):
             try:
@@ -155,6 +126,33 @@ def classes():
             if _len(bytes) != count:
                 raise StructError("EOF before reading all of bytes type")
             return loads(bytes)
+
+        def read_marker(self):
+            raise StopIteration
+
+        def invalid_typecode(self):
+            raise StructError("Invalid type byte: " + str(t))
+
+        TYPECODE_HANDLER_MAP = {
+            BYTES: read_bytes,
+            BYTE: read_byte,
+            BOOL: read_bool,
+            INT: read_int,
+            LONG: read_long,
+            FLOAT: read_float,
+            DOUBLE: read_double,
+            UNICODE: read_unicode,
+            VECTOR: read_vector,
+            LIST: read_list,
+            MAP: read_map,
+            PICKLE: read_pickle,
+            STRING: read_string,
+            MARKER: read_marker
+        }
+
+        def make_handler_table(self):
+            return tuple(Input.TYPECODE_HANDLER_MAP.get(i,
+                         Input.invalid_typecode) for i in xrange(256))
 
 
     _int, _type, _booltype = int, type, BooleanType
