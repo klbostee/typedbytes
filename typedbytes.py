@@ -4,6 +4,7 @@ def classes():
     from struct import pack, unpack, error as StructError
     from types import BooleanType, IntType, LongType, FloatType 
     from types import UnicodeType, StringType, TupleType, ListType, DictType
+    from collections import defaultdict
 
     # Typed bytes types:
     BYTES = 0
@@ -151,8 +152,11 @@ def classes():
         }
 
         def make_handler_table(self):
-            return tuple(Input.TYPECODE_HANDLER_MAP.get(i,
-                         Input.invalid_typecode) for i in xrange(256))
+            return list(Input.TYPECODE_HANDLER_MAP.get(i,
+                        Input.invalid_typecode) for i in xrange(256))
+
+        def register(self, typecode, handler):
+            self.handler_table[typecode] = handler
 
 
     _int, _type, _booltype = int, type, BooleanType
@@ -172,42 +176,15 @@ def classes():
         def __init__(self, file, unicode_errors='strict'):
             self.file = file
             self.unicode_errors = unicode_errors
+            self.handler_map = self.make_handler_map()
 
         def __del__(self):
             if not file.closed:
                 self.file.flush()
 
         def _write(self, obj):
-            # A guess at frequency order:
             t = _type(obj)
-            if t == _inttype:
-                # Python ints are 64-bit
-                if -2147483648 <= obj <= 2147483647:
-                    self.write_int(obj)
-                else:
-                    self.write_long(obj)
-            elif t == _longtype:
-                # Python longs are infinite precision
-                if -9223372036854775808L <= obj <= 9223372036854775807L:
-                    self.write_long(obj)
-                else:
-                    self.write_pickle(obj)
-            elif t == _unicodetype:
-                self.write_unicode(obj)
-            elif t == _strtype:
-                self.write_string(obj)
-            elif t == _booltype:
-                self.write_bool(obj)
-            elif t == _floattype:
-                self.write_double(obj) # Python floats are 64-bit
-            elif t == _tupletype:
-                self.write_vector(obj)
-            elif t == _listtype:
-                self.write_list(obj)
-            elif t == _dicttype:
-                self.write_map(obj)
-            else:
-                self.write_pickle(obj)
+            self.handler_map[t](self, obj)
 
         write = _write
 
@@ -235,10 +212,18 @@ def classes():
             self.file.write(pack('!Bb', BOOL, _int(bool_)))
 
         def write_int(self, int_):
-            self.file.write(pack('!Bi', INT, int_))
+            # Python ints are 64-bit
+            if -2147483648 <= int_ <= 2147483647:
+                self.file.write(pack('!Bi', INT, int_))
+            else:
+                self.file.write(pack('!Bq', LONG, int_))
 
         def write_long(self, long_):
-            self.file.write(pack('!Bq', LONG, long_)) 
+            # Python longs are infinite precision
+            if -9223372036854775808L <= long_ <= 9223372036854775807L:
+                self.file.write(pack('!Bq', LONG, long_))
+            else:
+                self.write_pickle(long_)
 
         def write_float(self, float_):
             self.file.write(pack('!Bf', FLOAT, float_))
@@ -272,6 +257,25 @@ def classes():
             bytes = dumps(obj, HIGHEST_PROTOCOL)
             self.file.write(pack('!Bi', PICKLE, _len(bytes)))
             self.file.write(bytes)
+
+        TYPECODE_HANDLER_MAP = {
+            BooleanType: write_bool,
+            IntType: write_int,                
+            LongType: write_long,       
+            FloatType: write_double,
+            UnicodeType: write_unicode,    
+            TupleType: write_vector,
+            ListType: write_list,        
+            DictType: write_map,       
+            StringType: write_string       
+        }
+
+        def make_handler_map(self):
+            return defaultdict(lambda: Output.write_pickle, 
+                               Output.TYPECODE_HANDLER_MAP)
+
+        def register(self, python_type, handler):
+            self.handler_map[python_type] = handler
 
 
     class PairedInput(Input):
