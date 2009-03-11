@@ -7,6 +7,24 @@ from itertools import imap
 
 class TestSpeed(unittest.TestCase):
 
+    def testints(self):
+        file = cStringIO.StringIO()
+
+        output = typedbytes.Output(file)
+        t = time.time()
+        output.writes(xrange(100000))
+        print time.time() - t
+
+        file.seek(0)
+
+        input = typedbytes.Input(file)
+        t = time.time()
+        for record in input:
+            pass
+        print time.time() -t
+
+        file.close()
+
     def teststrings(self):
         file = cStringIO.StringIO()
 
