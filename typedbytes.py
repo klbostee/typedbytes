@@ -74,7 +74,7 @@ def classes():
             while 1:
                 yield r()
 
-        __iter__ = readlines = reads = _reads
+        __iter__ = reads = _reads
 
         def close(self):
             self.file.close()
@@ -188,7 +188,7 @@ def classes():
             for obj in iterable:
                 w(obj)
 
-        writes = writelines = _writes
+        writes = _writes
 
         def flush(self):
             self.file.flush()
@@ -266,7 +266,7 @@ def classes():
                     raise StructError('EOF before second item in pair')
                 yield key, value
 
-        __iter__ = readlines = reads
+        __iter__ = reads
 
 
     class PairedOutput(Output):
@@ -276,8 +276,6 @@ def classes():
 
         def writes(self, iterable):
             self._writes(flatten(iterable))
-
-        writelines = writes
 
 
     return Input, Output, PairedInput, PairedOutput
