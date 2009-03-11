@@ -2,6 +2,8 @@ def classes():
 
     from cPickle import dumps, loads, UnpicklingError, HIGHEST_PROTOCOL
     from struct import pack, unpack, error as StructError
+    from types import BooleanType, IntType, LongType, FloatType 
+    from types import UnicodeType, StringType, TupleType, ListType, DictType
 
     # Typed bytes types:
     BYTES = 0
@@ -155,9 +157,10 @@ def classes():
             return loads(bytes)
 
 
-    _isinstance = isinstance
-    _int, _long, _unicode, _str = int, long, unicode, str
-    _bool, _float, _tuple, _list, _dict = bool, float, tuple, list, dict
+    _int, _type, _booltype = int, type, BooleanType
+    _inttype, _longtype, _floattype = IntType, LongType, FloatType
+    _unicodetype, _strtype = UnicodeType, StringType
+    _tupletype, _listtype, _dicttype = TupleType, ListType, DictType
 
 
     def flatten(iterable):
@@ -178,31 +181,32 @@ def classes():
 
         def _write(self, obj):
             # A guess at frequency order:
-            if _isinstance(obj, _int):
+            t = _type(obj)
+            if t == _inttype:
                 # Python ints are 64-bit
                 if -2147483648 <= obj <= 2147483647:
                     self.write_int(obj)
                 else:
                     self.write_long(obj)
-            elif _isinstance(obj, _long):
+            elif t == _longtype:
                 # Python longs are infinite precision
                 if -9223372036854775808L <= obj <= 9223372036854775807L:
                     self.write_long(obj)
                 else:
                     self.write_pickle(obj)
-            elif _isinstance(obj, _unicode):
+            elif t == _unicodetype:
                 self.write_unicode(obj)
-            elif _isinstance(obj, _str):
+            elif t == _strtype:
                 self.write_string(obj)
-            elif _isinstance(obj, _bool):
+            elif t == _booltype:
                 self.write_bool(obj)
-            elif _isinstance(obj, _float):
+            elif t == _floattype:
                 self.write_double(obj) # Python floats are 64-bit
-            elif _isinstance(obj, _tuple):
+            elif t == _tupletype:
                 self.write_vector(obj)
-            elif _isinstance(obj, _list):
+            elif t == _listtype:
                 self.write_list(obj)
-            elif _isinstance(obj, _dict):
+            elif t == _dicttype:
                 self.write_map(obj)
             else:
                 self.write_pickle(obj)
