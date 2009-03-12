@@ -4,7 +4,6 @@ def classes():
     from struct import pack, unpack, error as StructError
     from types import BooleanType, IntType, LongType, FloatType 
     from types import UnicodeType, StringType, TupleType, ListType, DictType
-    from collections import defaultdict
 
     # Typed bytes types:
     BYTES = 0
@@ -180,8 +179,11 @@ def classes():
                 self.file.flush()
 
         def _write(self, obj):
-            t = _type(obj)
-            self.handler_map[t](self, obj)
+            try:
+                writefunc = self.handler_map[_type(obj)]
+            except KeyError:
+                writefunc = Output.write_pickle
+            writefunc(self, obj)
 
         write = _write
 
@@ -268,8 +270,7 @@ def classes():
         }
 
         def make_handler_map(self):
-            return defaultdict(lambda: Output.write_pickle, 
-                               Output.TYPECODE_HANDLER_MAP)
+            return dict(Output.TYPECODE_HANDLER_MAP)
 
         def register(self, python_type, handler):
             self.handler_map[python_type] = handler
