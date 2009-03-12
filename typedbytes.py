@@ -159,10 +159,7 @@ def classes():
             self.handler_table[typecode] = handler
 
 
-    _int, _type, _booltype = int, type, BooleanType
-    _inttype, _longtype, _floattype = IntType, LongType, FloatType
-    _unicodetype, _strtype = UnicodeType, StringType
-    _tupletype, _listtype, _dicttype = TupleType, ListType, DictType
+    _int, _type = int, type
 
 
     def flatten(iterable):
