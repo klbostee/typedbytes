@@ -1,3 +1,24 @@
+# Typed bytes types:
+BYTES = 0
+BYTE = 1
+BOOL = 2
+INT = 3
+LONG = 4
+FLOAT = 5
+DOUBLE = 6
+STRING = 7
+VECTOR = 8
+LIST = 9
+MAP = 10
+
+# Application-specific types:
+PICKLE = 100
+BYTESTRING = 101
+
+# Low-level types:
+MARKER = 255
+
+
 def classes():
 
     from cPickle import dumps, loads, UnpicklingError, HIGHEST_PROTOCOL
@@ -5,27 +26,6 @@ def classes():
     from types import BooleanType, IntType, LongType, FloatType 
     from types import UnicodeType, StringType, TupleType, ListType, DictType
 
-    # Typed bytes types:
-    BYTES = 0
-    BYTE = 1
-    BOOL = 2
-    INT = 3
-    LONG = 4
-    FLOAT = 5
-    DOUBLE = 6
-    STRING = 7
-    VECTOR = 8
-    LIST = 9
-    MAP = 10
-
-    # Application-specific types:
-    PICKLE = 100
-    BYTESTRING = 101
-
-    # Low-level types:
-    MARKER = 255
-
-    LIST_CODE, MARKER_CODE = (pack('!B', i) for i in (LIST, MARKER))
     UNICODE_ENCODING = 'utf8'
 
     _len = len
@@ -160,6 +160,13 @@ def classes():
             self.handler_table[typecode] = handler
 
 
+    _BYTES, _BYTE, _BOOL = BYTES, BYTE, BOOL
+    _INT, _LONG, _FLOAT, _DOUBLE = INT, LONG, FLOAT, DOUBLE
+    _STRING, _VECTOR, _LIST, _MAP = STRING, VECTOR, LIST, MAP
+    _PICKLE, _BYTESTRING, _MARKER = PICKLE, BYTESTRING, MARKER
+
+    LIST_CODE, MARKER_CODE = (pack('!B', i) for i in (LIST, MARKER))
+
     _int, _type = int, type
 
 
@@ -203,50 +210,50 @@ def classes():
             self.file.close()
 
         def write_bytes(self, bytes):
-            self.file.write(pack('!Bi', BYTES, _len(bytes)))
+            self.file.write(pack('!Bi', _BYTES, _len(bytes)))
             self.file.write(bytes)
 
         def write_byte(self, byte):
-            self.file.write(pack('!Bb', BYTE, byte))
+            self.file.write(pack('!Bb', _BYTE, byte))
 
         def write_bool(self, bool_):
-            self.file.write(pack('!Bb', BOOL, _int(bool_)))
+            self.file.write(pack('!Bb', _BOOL, _int(bool_)))
 
         def write_int(self, int_):
             # Python ints are 64-bit
             if -2147483648 <= int_ <= 2147483647:
-                self.file.write(pack('!Bi', INT, int_))
+                self.file.write(pack('!Bi', _INT, int_))
             else:
-                self.file.write(pack('!Bq', LONG, int_))
+                self.file.write(pack('!Bq', _LONG, int_))
 
         def write_long(self, long_):
             # Python longs are infinite precision
             if -9223372036854775808L <= long_ <= 9223372036854775807L:
-                self.file.write(pack('!Bq', LONG, long_))
+                self.file.write(pack('!Bq', _LONG, long_))
             else:
                 self.write_pickle(long_)
 
         def write_float(self, float_):
-            self.file.write(pack('!Bf', FLOAT, float_))
+            self.file.write(pack('!Bf', _FLOAT, float_))
 
         def write_double(self, double):
-            self.file.write(pack('!Bd', DOUBLE, double))
+            self.file.write(pack('!Bd', _DOUBLE, double))
 
         def write_string(self, string):
-            self.file.write(pack('!Bi', STRING, _len(string)))
+            self.file.write(pack('!Bi', _STRING, _len(string)))
             self.file.write(string)
 
         def write_bytestring(self, string):
-            self.file.write(pack('!Bi', BYTESTRING, _len(string)))
+            self.file.write(pack('!Bi', _BYTESTRING, _len(string)))
             self.file.write(string)
 
         def write_unicode(self, string):
             string = string.encode(UNICODE_ENCODING, self.unicode_errors)
-            self.file.write(pack('!Bi', STRING, _len(string)))
+            self.file.write(pack('!Bi', _STRING, _len(string)))
             self.file.write(string)
 
         def write_vector(self, vector):
-            self.file.write(pack('!Bi', VECTOR, _len(vector)))
+            self.file.write(pack('!Bi', _VECTOR, _len(vector)))
             self._writes(vector)
 
         def write_list(self, list_):
@@ -255,15 +262,15 @@ def classes():
             self.file.write(MARKER_CODE)
 
         def write_map(self, map):
-            self.file.write(pack('!Bi', MAP, _len(map)))
+            self.file.write(pack('!Bi', _MAP, _len(map)))
             self._writes(flatten(map.iteritems()))
 
         def write_pickle(self, obj):
             bytes = dumps(obj, HIGHEST_PROTOCOL)
-            self.file.write(pack('!Bi', PICKLE, _len(bytes)))
+            self.file.write(pack('!Bi', _PICKLE, _len(bytes)))
             self.file.write(bytes)
 
-        TYPECODE_HANDLER_MAP = {
+        TYPE_HANDLER_MAP = {
             BooleanType: write_bool,
             IntType: write_int,                
             LongType: write_long,       
@@ -276,7 +283,7 @@ def classes():
         }
 
         def make_handler_map(self):
-            return dict(Output.TYPECODE_HANDLER_MAP)
+            return dict(Output.TYPE_HANDLER_MAP)
 
         def register(self, python_type, handler):
             self.handler_map[python_type] = handler
