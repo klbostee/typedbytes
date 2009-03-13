@@ -13,14 +13,14 @@ def classes():
     LONG = 4
     FLOAT = 5
     DOUBLE = 6
-    UNICODE = 7
+    STRING = 7
     VECTOR = 8
     LIST = 9
     MAP = 10
 
     # Application-specific types:
     PICKLE = 100
-    STRING = 101
+    BYTESTRING = 101
 
     # Low-level types:
     MARKER = 255
@@ -87,19 +87,21 @@ def classes():
         def read_double(self):
             return unpack('!d', self.file.read(8))[0]
 
-        def read_unicode(self):
-            count = unpack('!i', self.file.read(4))[0]
-            value = self.file.read(count)
-            if _len(value) != count:
-                raise StructError("EOF before reading all of string")
-            return value.decode(UNICODE_ENCODING, self.unicode_errors)
-
         def read_string(self):
             count = unpack('!i', self.file.read(4))[0]
             value = self.file.read(count)
             if _len(value) != count:
                 raise StructError("EOF before reading all of string")
             return value
+
+        read_bytestring = read_string
+
+        def read_unicode(self):
+            count = unpack('!i', self.file.read(4))[0]
+            value = self.file.read(count)
+            if _len(value) != count:
+                raise StructError("EOF before reading all of string")
+            return value.decode(UNICODE_ENCODING, self.unicode_errors)
 
         def read_vector(self):
             r = self._read
@@ -141,12 +143,12 @@ def classes():
             LONG: read_long,
             FLOAT: read_float,
             DOUBLE: read_double,
-            UNICODE: read_unicode,
+            STRING: read_string,
             VECTOR: read_vector,
             LIST: read_list,
             MAP: read_map,
             PICKLE: read_pickle,
-            STRING: read_string,
+            BYTESTRING: read_bytestring,
             MARKER: read_marker
         }
 
@@ -230,12 +232,16 @@ def classes():
         def write_double(self, double):
             self.file.write(pack('!Bd', DOUBLE, double))
 
-        def write_unicode(self, string):
-            string = string.encode(UNICODE_ENCODING, self.unicode_errors)
-            self.file.write(pack('!Bi', UNICODE, _len(string)))
+        def write_string(self, string):
+            self.file.write(pack('!Bi', STRING, _len(string)))
             self.file.write(string)
 
-        def write_string(self, string):
+        def write_bytestring(self, string):
+            self.file.write(pack('!Bi', BYTESTRING, _len(string)))
+            self.file.write(string)
+
+        def write_unicode(self, string):
+            string = string.encode(UNICODE_ENCODING, self.unicode_errors)
             self.file.write(pack('!Bi', STRING, _len(string)))
             self.file.write(string)
 
@@ -262,11 +268,11 @@ def classes():
             IntType: write_int,                
             LongType: write_long,       
             FloatType: write_double,
-            UnicodeType: write_unicode,    
+            StringType: write_string,
             TupleType: write_vector,
             ListType: write_list,        
-            DictType: write_map,       
-            StringType: write_string       
+            DictType: write_map,
+            UnicodeType: write_unicode
         }
 
         def make_handler_map(self):

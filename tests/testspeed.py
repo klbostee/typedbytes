@@ -43,6 +43,24 @@ class TestSpeed(unittest.TestCase):
 
         file.close()
 
+    def testunicodes(self):
+        file = cStringIO.StringIO()
+
+        output = typedbytes.Output(file)
+        t = time.time()
+        output.writes(imap(unicode, xrange(100000)))
+        print time.time() - t
+
+        file.seek(0)
+
+        input = typedbytes.Input(file)
+        t = time.time()
+        for record in input:
+            pass
+        print time.time() -t
+
+        file.close()
+
 
 if __name__ == "__main__":
     suite = unittest.TestLoader().loadTestsFromTestCase(TestSpeed)
