@@ -41,6 +41,7 @@ def classes():
         def _read(self):
             try:
                 t = unpack('!B', self.file.read(1))[0]
+                self.t = t
             except StructError:
                 self.eof = True
                 raise StopIteration
@@ -133,7 +134,7 @@ def classes():
             raise StopIteration
 
         def invalid_typecode(self):
-            raise StructError("Invalid type byte: " + str(t))
+            raise StructError("Invalid type byte: " + str(self.t))
 
         TYPECODE_HANDLER_MAP = {
             BYTES: read_bytes,
