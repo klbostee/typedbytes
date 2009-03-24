@@ -25,6 +25,8 @@ def classes():
     from struct import pack, unpack, error as StructError
     from types import BooleanType, IntType, LongType, FloatType 
     from types import UnicodeType, StringType, TupleType, ListType, DictType
+    from datetime import datetime, date
+    from decimal import Decimal
 
     UNICODE_ENCODING = 'utf8'
 
@@ -280,7 +282,10 @@ def classes():
             TupleType: write_vector,
             ListType: write_list,        
             DictType: write_map,
-            UnicodeType: write_unicode
+            UnicodeType: write_unicode,
+            datetime: write_pickle,
+            date: write_pickle,
+            Decimal: write_pickle
         }
 
         def make_handler_map(self):
