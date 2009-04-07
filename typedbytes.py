@@ -22,13 +22,20 @@ MARKER = 255
 def classes():
 
     from cPickle import dumps, loads, UnpicklingError, HIGHEST_PROTOCOL
-    from struct import pack, unpack, error as StructError
+    from struct import pack, unpack, error as StructError, Struct
     from types import BooleanType, IntType, LongType, FloatType 
     from types import UnicodeType, StringType, TupleType, ListType, DictType
     from datetime import datetime, date
     from decimal import Decimal
 
     UNICODE_ENCODING = 'utf8'
+
+    unpack_type = Struct('!B').unpack
+    unpack_byte = Struct('!b').unpack
+    unpack_int = Struct('!i').unpack
+    unpack_long = Struct('!q').unpack
+    unpack_float = Struct('!f').unpack
+    unpack_double = Struct('!d').unpack
 
     _len = len
 
@@ -42,7 +49,7 @@ def classes():
 
         def _read(self):
             try:
-                t = unpack('!B', self.file.read(1))[0]
+                t = unpack_type(self.file.read(1))[0]
                 self.t = t
             except StructError:
                 self.eof = True
@@ -66,32 +73,32 @@ def classes():
             self.file.close()
 
         def read_bytes(self):
-            count = unpack('!i', self.file.read(4))[0]
+            count = unpack_int(self.file.read(4))[0]
             value = self.file.read(count)
             if _len(value) != count:
                 raise StructError("EOF before reading all of bytes type")
             return value
 
         def read_byte(self):
-            return unpack('!b', self.file.read(1))[0]
+            return unpack_byte(self.file.read(1))[0]
 
         def read_bool(self):
-            return bool(unpack('!b', self.file.read(1))[0])
+            return bool(unpack_byte(self.file.read(1))[0])
 
         def read_int(self):
-            return unpack('!i', self.file.read(4))[0]
+            return unpack_int(self.file.read(4))[0]
 
         def read_long(self):
-            return unpack('!q', self.file.read(8))[0]
+            return unpack_long(self.file.read(8))[0]
 
         def read_float(self):
-            return unpack('!f', self.file.read(4))[0]
+            return unpack_float(self.file.read(4))[0]
 
         def read_double(self):
-            return unpack('!d', self.file.read(8))[0]
+            return unpack_double(self.file.read(8))[0]
 
         def read_string(self):
-            count = unpack('!i', self.file.read(4))[0]
+            count = unpack_int(self.file.read(4))[0]
             value = self.file.read(count)
             if _len(value) != count:
                 raise StructError("EOF before reading all of string")
@@ -100,7 +107,7 @@ def classes():
         read_bytestring = read_string
 
         def read_unicode(self):
-            count = unpack('!i', self.file.read(4))[0]
+            count = unpack_int(self.file.read(4))[0]
             value = self.file.read(count)
             if _len(value) != count:
                 raise StructError("EOF before reading all of string")
@@ -108,7 +115,7 @@ def classes():
 
         def read_vector(self):
             r = self._read
-            count = unpack('!i', self.file.read(4))[0]
+            count = unpack_int(self.file.read(4))[0]
             try:
                 return tuple(r() for i in xrange(count))
             except StopIteration:
@@ -122,11 +129,11 @@ def classes():
 
         def read_map(self):
             r = self._read
-            count = unpack('!i', self.file.read(4))[0]
+            count = unpack_int(self.file.read(4))[0]
             return dict((r(), r()) for i in xrange(count))
 
         def read_pickle(self):
-            count = unpack('!i', self.file.read(4))[0]
+            count = unpack_int(self.file.read(4))[0]
             bytes = self.file.read(count)
             if _len(bytes) != count:
                 raise StructError("EOF before reading all of bytes type")
@@ -169,6 +176,12 @@ def classes():
     _PICKLE, _BYTESTRING, _MARKER = PICKLE, BYTESTRING, MARKER
 
     LIST_CODE, MARKER_CODE = (pack('!B', i) for i in (LIST, MARKER))
+
+    pack_byte = Struct('!Bb').pack
+    pack_int = Struct('!Bi').pack
+    pack_long = Struct('!Bq').pack
+    pack_float = Struct('!Bf').pack
+    pack_double = Struct('!Bd').pack
 
     _int, _type = int, type
 
@@ -213,50 +226,50 @@ def classes():
             self.file.close()
 
         def write_bytes(self, bytes):
-            self.file.write(pack('!Bi', _BYTES, _len(bytes)))
+            self.file.write(pack_int(_BYTES, _len(bytes)))
             self.file.write(bytes)
 
         def write_byte(self, byte):
-            self.file.write(pack('!Bb', _BYTE, byte))
+            self.file.write(pack_byte(_BYTE, byte))
 
         def write_bool(self, bool_):
-            self.file.write(pack('!Bb', _BOOL, _int(bool_)))
+            self.file.write(pack_byte(_BOOL, _int(bool_)))
 
         def write_int(self, int_):
             # Python ints are 64-bit
             if -2147483648 <= int_ <= 2147483647:
-                self.file.write(pack('!Bi', _INT, int_))
+                self.file.write(pack_int(_INT, int_))
             else:
-                self.file.write(pack('!Bq', _LONG, int_))
+                self.file.write(pack_long(_LONG, int_))
 
         def write_long(self, long_):
             # Python longs are infinite precision
             if -9223372036854775808L <= long_ <= 9223372036854775807L:
-                self.file.write(pack('!Bq', _LONG, long_))
+                self.file.write(pack_long(_LONG, long_))
             else:
                 self.write_pickle(long_)
 
         def write_float(self, float_):
-            self.file.write(pack('!Bf', _FLOAT, float_))
+            self.file.write(pack_float(_FLOAT, float_))
 
         def write_double(self, double):
-            self.file.write(pack('!Bd', _DOUBLE, double))
+            self.file.write(pack_double(_DOUBLE, double))
 
         def write_string(self, string):
-            self.file.write(pack('!Bi', _STRING, _len(string)))
+            self.file.write(pack_int(_STRING, _len(string)))
             self.file.write(string)
 
         def write_bytestring(self, string):
-            self.file.write(pack('!Bi', _BYTESTRING, _len(string)))
+            self.file.write(pack_int(_BYTESTRING, _len(string)))
             self.file.write(string)
 
         def write_unicode(self, string):
             string = string.encode(UNICODE_ENCODING, self.unicode_errors)
-            self.file.write(pack('!Bi', _STRING, _len(string)))
+            self.file.write(pack_int(_STRING, _len(string)))
             self.file.write(string)
 
         def write_vector(self, vector):
-            self.file.write(pack('!Bi', _VECTOR, _len(vector)))
+            self.file.write(pack_int(_VECTOR, _len(vector)))
             self._writes(vector)
 
         def write_list(self, list_):
@@ -265,12 +278,12 @@ def classes():
             self.file.write(MARKER_CODE)
 
         def write_map(self, map):
-            self.file.write(pack('!Bi', _MAP, _len(map)))
+            self.file.write(pack_int(_MAP, _len(map)))
             self._writes(flatten(map.iteritems()))
 
         def write_pickle(self, obj):
             bytes = dumps(obj, HIGHEST_PROTOCOL)
-            self.file.write(pack('!Bi', _PICKLE, _len(bytes)))
+            self.file.write(pack_int(_PICKLE, _len(bytes)))
             self.file.write(bytes)
 
         TYPE_HANDLER_MAP = {
