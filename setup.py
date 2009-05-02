@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='typedbytes',
-      version='0.3.6',
+      version='0.3.7',
       description='A Python module for dealing with so called "typed bytes"',
       author='Klaas Bosteels',
       author_email='klaas@last.fm',
