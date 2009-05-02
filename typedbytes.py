@@ -62,7 +62,7 @@ def classes():
             self.file = file
             self.unicode_errors = unicode_errors
             self.eof = False
-            self.handler_table = self.make_handler_table()
+            self.handler_table = self._make_handler_table()
 
         def _read(self):
             try:
@@ -179,12 +179,15 @@ def classes():
             MARKER: read_marker
         }
 
-        def make_handler_table(self):
+        def _make_handler_table(self):
             return list(Input.TYPECODE_HANDLER_MAP.get(i,
                         Input.invalid_typecode) for i in xrange(256))
 
         def register(self, typecode, handler):
             self.handler_table[typecode] = handler
+
+        def lookup(self, typecode):
+            return self.handler_table[typecode]
 
 
     _BYTES, _BYTE, _BOOL = BYTES, BYTE, BOOL
@@ -214,7 +217,7 @@ def classes():
         def __init__(self, file, unicode_errors='strict'):
             self.file = file
             self.unicode_errors = unicode_errors
-            self.handler_map = self.make_handler_map()
+            self.handler_map = self._make_handler_map()
 
         def __del__(self):
             if not file.closed:
@@ -318,11 +321,17 @@ def classes():
             Decimal: write_pickle
         }
 
-        def make_handler_map(self):
+        def _make_handler_map(self):
             return dict(Output.TYPE_HANDLER_MAP)
 
         def register(self, python_type, handler):
             self.handler_map[python_type] = handler
+
+        def lookup(self, python_type):
+            try:
+                return self.handler_map[python_type]
+            except KeyError:
+                return Output.write_pickle
 
 
     class PairedInput(Input):
