@@ -187,7 +187,7 @@ def classes():
             self.handler_table[typecode] = handler
 
         def lookup(self, typecode):
-            return self.handler_table[typecode]
+            return lambda: self.handler_table[typecode](self)
 
 
     _BYTES, _BYTE, _BOOL = BYTES, BYTE, BOOL
@@ -328,10 +328,11 @@ def classes():
             self.handler_map[python_type] = handler
 
         def lookup(self, python_type):
-            try:
-                return self.handler_map[python_type]
-            except KeyError:
-                return Output.write_pickle
+            handler_map = self.handler_map
+            if python_type in handler_map:
+                return lambda obj: handler_map[python_type](self, obj)
+            else:
+                return lambda obj: Output.write_pickle(self, obj)
 
 
     class PairedInput(Input):
