@@ -39,7 +39,18 @@ MARKER = 255
 def classes():
 
     from cPickle import dumps, loads, UnpicklingError, HIGHEST_PROTOCOL
-    from struct import pack, unpack, error as StructError, Struct
+    from struct import pack, unpack, error as StructError
+    try:
+        from struct import Struct
+    except ImportError:
+        class Struct(object):
+            def __init__(self, fmt):
+                self.fmt = fmt
+            def unpack(self, *args):
+                return unpack(self.fmt, *args)
+            def pack(self, *args):
+                return pack(self.fmt, *args)
+
     from types import BooleanType, IntType, LongType, FloatType 
     from types import UnicodeType, StringType, TupleType, ListType, DictType
     from datetime import datetime, date
