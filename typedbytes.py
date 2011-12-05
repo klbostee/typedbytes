@@ -40,6 +40,7 @@ def classes():
 
     from cPickle import dumps, loads, UnpicklingError, HIGHEST_PROTOCOL
     from struct import pack, unpack, error as StructError
+    from array import array
     try:
         from struct import Struct
     except ImportError:
@@ -66,6 +67,16 @@ def classes():
     unpack_double = Struct('!d').unpack
 
     _len = len
+
+
+    class Bytes(array):
+
+        def __new__(cls, size):
+            return array.__new__(cls, 'c')
+
+        def __init__(self, bytes):
+            self.extend(bytes)
+
 
     class Input(object):
 
@@ -105,7 +116,7 @@ def classes():
             value = self.file.read(count)
             if _len(value) != count:
                 raise StructError("EOF before reading all of bytes type")
-            return value
+            return Bytes(value)
 
         def read_byte(self):
             return unpack_byte(self.file.read(1))[0]
@@ -317,6 +328,11 @@ def classes():
             self.file.write(pack_int(_PICKLE, _len(bytes)))
             self.file.write(bytes)
 
+        def write_array(self, arr):
+            bytes = arr.tostring()
+            self.file.write(pack_int(_BYTES, _len(bytes)))
+            self.file.write(bytes)
+
         TYPE_HANDLER_MAP = {
             BooleanType: write_bool,
             IntType: write_int,                
@@ -327,9 +343,11 @@ def classes():
             ListType: write_list,        
             DictType: write_map,
             UnicodeType: write_unicode,
+            Bytes: write_bytes,
             datetime: write_pickle,
             date: write_pickle,
-            Decimal: write_pickle
+            Decimal: write_pickle,
+            array: write_array
         }
 
         def _make_handler_map(self):
@@ -382,7 +400,7 @@ def classes():
             self._writes(flatten(iterable))
 
 
-    return Input, Output, PairedInput, PairedOutput
+    return Input, Output, PairedInput, PairedOutput, Bytes
 
 
-Input, Output, PairedInput, PairedOutput = classes()
+Input, Output, PairedInput, PairedOutput, Bytes = classes()
