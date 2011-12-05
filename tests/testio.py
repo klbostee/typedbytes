@@ -9,7 +9,8 @@ class TestIO(unittest.TestCase):
 
     objects = [True, 1234, 3000000000, 12345L, 1.23, "trala", u'trala',
                 (1,2,3), [1,2,3,4], {1:2,3:4}, set([1,2,3]),
-                decimal.Decimal("123.456"), datetime.datetime.now()]
+                decimal.Decimal("123.456"), datetime.datetime.now(),
+                typedbytes.Bytes("abc123\x01")]
 
     def testio(self):
         objects = TestIO.objects
