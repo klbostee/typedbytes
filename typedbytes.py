@@ -69,16 +69,10 @@ def classes():
     _len = len
 
 
-    class Bytes(array):
+    class Bytes(str):
 
-        def __new__(cls, size):
-            return array.__new__(cls, 'c')
-
-        def __init__(self, bytes):
-            self.extend(bytes)
-
-        def __str__(self):
-            return "Bytes(" + repr(self.tostring()) + ")"
+        def __repr__(self):
+            return "Bytes(" + str.__repr__(self) + ")"
 
 
     class Input(object):
